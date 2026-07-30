@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /*
+   * 글자 크게 토글의 유일한 스위치.
+   * <html> 에 class="large-text" 하나만 붙이면
+   * rem 기반 토큰(글자·터치영역·여백)이 전부 정확히 1.25배가 된다.
+   *   16px -> 20px  (20px 본문 -> 25px, 24px 버튼 -> 30px, 32px 제목 -> 40px, 64px 터치 -> 80px)
+   * 실제 토글 UI 는 마일스톤 2(설정 화면)에서 붙인다.
+   */
+  html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  html.large-text {
+    font-size: 20px;
+  }
+
+  body {
+    @apply bg-bg text-ink text-body antialiased;
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic',
+      system-ui, -apple-system, 'Segoe UI', sans-serif;
+    /* 고령자 대상: 강제 라이트 배경 유지 (다크모드 미구현 — SPEC 10장) */
+    color-scheme: light;
+  }
+
+  /* 키보드 포커스는 크고 명확하게 (SPEC 3.1) */
+  :focus-visible {
+    outline: 4px solid theme('colors.accent.500');
+    outline-offset: 3px;
+    border-radius: 0.5rem;
+  }
+
+  /* 애니메이션은 절제하고 느리게 (SPEC 3장) */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

@@ -7,6 +7,17 @@ import Training from './pages/Training.jsx'
 import Family from './pages/Family.jsx'
 import Settings from './pages/Settings.jsx'
 import { useUiStore } from './store/useUiStore.js'
+import { useAppStore } from './store/useAppStore.js'
+
+/*
+ * 프로필이 없으면 어느 경로로 들어와도 온보딩으로 보낸다.
+ * 하단 탭이 있는 화면 전체를 감싸므로 /home /training /family /settings 가 모두 보호된다.
+ */
+function RequireProfile() {
+  const profile = useAppStore((state) => state.profile)
+  if (!profile) return <Navigate to="/onboarding" replace />
+  return <AppLayout />
+}
 
 export default function App() {
   const largeText = useUiStore((state) => state.largeText)
@@ -20,7 +31,7 @@ export default function App() {
     <Routes>
       <Route path="/onboarding" element={<Onboarding />} />
 
-      <Route element={<AppLayout />}>
+      <Route element={<RequireProfile />}>
         <Route path="/home" element={<Home />} />
         <Route path="/training" element={<Training />} />
         <Route path="/family" element={<Family />} />

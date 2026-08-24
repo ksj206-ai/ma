@@ -8,6 +8,7 @@ import Family from './pages/Family.jsx'
 import Settings from './pages/Settings.jsx'
 import Result from './pages/Result.jsx'
 import Shopping from './games/Shopping.jsx'
+import Cooking from './games/Cooking.jsx'
 import { useUiStore } from './store/useUiStore.js'
 import { useAppStore } from './store/useAppStore.js'
 
@@ -39,6 +40,7 @@ export default function App() {
         {/* 게임과 결과도 하단 탭이 보이는 레이아웃 안에 둔다.
             도중에 탭으로 나가도 앱이 깨지지 않아야 하기 때문이다(SPEC 6.1). */}
         <Route path="/training/shopping" element={<Shopping />} />
+        <Route path="/training/cooking" element={<Cooking />} />
         <Route path="/result" element={<Result />} />
         <Route path="/family" element={<Family />} />
         <Route path="/settings" element={<Settings />} />

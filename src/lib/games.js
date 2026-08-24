@@ -20,8 +20,8 @@ export const GAMES = {
     name: '요리 순서 맞추기',
     summary: '요리하는 순서를 차례대로 골라 봐요.',
     domains: ['순서화', '실행기능', '작업기억'],
-    route: null,
-    available: false, // 마일스톤 4
+    route: '/training/cooking',
+    available: true,
   },
 }
 

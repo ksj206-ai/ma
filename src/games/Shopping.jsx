@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageTitle from '../components/PageTitle.jsx'
 import Card from '../components/Card.jsx'
@@ -6,13 +6,17 @@ import BigButton from '../components/BigButton.jsx'
 import ChoiceButton from '../components/ChoiceButton.jsx'
 import ShelfItem from '../components/ShelfItem.jsx'
 import StepProgress from '../components/StepProgress.jsx'
+import CountdownPanel from '../components/CountdownPanel.jsx'
+import GameIntro from '../components/GameIntro.jsx'
 import { useAppStore } from '../store/useAppStore.js'
 import { todayKey } from '../lib/dates.js'
 import { formatWon } from '../lib/recipes.js'
+import { buildSessions, elapsedSec } from './gameCommon.js'
+import { useCountdown } from './useCountdown.js'
 import {
+  buildBridgeMissionText,
   buildChangeQuestion,
   buildRound,
-  buildSessions,
   gradeCart,
   getLevelConfig,
 } from './shoppingLogic.js'
@@ -49,7 +53,6 @@ export default function Shopping() {
   const { config, recipe, targets, shelf } = round
 
   const [phase, setPhase] = useState(PHASES.INTRO)
-  const [secondsLeft, setSecondsLeft] = useState(config.exposureSec)
   const [cart, setCart] = useState([])
   const [changeChoice, setChangeChoice] = useState(null)
 
@@ -64,24 +67,12 @@ export default function Shopping() {
     [config.hasChange, targets]
   )
 
-  // 목록 노출 카운트다운. 화면을 벗어나면 반드시 멈춘다.
-  useEffect(() => {
-    if (phase !== PHASES.MEMORIZE) return undefined
-
-    const timer = setInterval(() => {
-      setSecondsLeft((remaining) => {
-        if (remaining <= 1) {
-          clearInterval(timer)
-          setPhase(PHASES.SHOP)
-          shopStartedAt.current = Date.now()
-          return 0
-        }
-        return remaining - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [phase])
+  // 노출 카운트다운은 요리 게임과 공통 훅을 쓴다 (화면을 벗어나면 알아서 멈춘다).
+  const secondsLeft = useCountdown(
+    config.exposureSec,
+    phase === PHASES.MEMORIZE,
+    () => goShopping()
+  )
 
   const totalSteps = config.hasChange ? 3 : 2
   const currentStep = phase === PHASES.CHECKOUT ? 3 : phase === PHASES.SHOP ? 2 : 1
@@ -96,10 +87,6 @@ export default function Shopping() {
     )
   }
 
-  function elapsedSec(startedAt) {
-    return Math.max(1, Math.round((Date.now() - startedAt) / 1000))
-  }
-
   function goShopping() {
     setPhase(PHASES.SHOP)
     shopStartedAt.current = Date.now()
@@ -110,35 +97,82 @@ export default function Shopping() {
     const grade = gradeRef.current
     const now = Date.now()
 
-    const sessions = buildSessions({
-      level,
-      grade,
-      change,
-      memoryDurationSec: memoryDurationRef.current,
-      changeDurationSec: change ? elapsedSec(checkoutStartedAt.current) : 0,
-      dateKey: todayKey(),
-      now,
-    })
-    addSessions(sessions)
+    // 장보기는 인지 영역이 둘(작업기억 · 계산)이라 영역별로 레코드를 나눈다.
+    // 계산 단계가 없는 난이도에서는 '계산' part 를 넘기지 않으므로 레코드도 생기지 않는다.
+    addSessions(
+      buildSessions({
+        gameId: 'shopping',
+        level,
+        dateKey: todayKey(),
+        now,
+        parts: [
+          {
+            key: 'memory',
+            domain: '작업기억',
+            accuracy: grade.accuracy,
+            durationSec: memoryDurationRef.current,
+          },
+          ...(change
+            ? [
+                {
+                  key: 'calc',
+                  domain: '계산',
+                  accuracy: change.isCorrect ? 1 : 0,
+                  durationSec: elapsedSec(checkoutStartedAt.current),
+                },
+              ]
+            : []),
+        ],
+      })
+    )
 
     navigate('/result', {
       replace: true,
       state: {
-        gameId: 'shopping',
-        level,
-        recipeId: recipe.id,
         recipeName: recipe.name,
-        correct: grade.correct,
-        missed: grade.missed,
-        total: grade.total,
-        change: change
-          ? {
-              isCorrect: change.isCorrect,
-              answer: changeQuestion.answer,
-              bill: changeQuestion.bill,
-              total: changeQuestion.total,
-            }
-          : null,
+        replayPath: '/training/shopping',
+        bridgeText: buildBridgeMissionText(recipe.name),
+        headline:
+          grade.missed.length === 0
+            ? '전부 찾으셨어요!'
+            : grade.correct.length > 0
+              ? '잘하셨어요!'
+              : '오늘도 해내셨어요!',
+        blocks: [
+          {
+            kind: 'chips',
+            title: '장바구니에 담으신 것',
+            tone: 'good',
+            items: grade.correct,
+            emptyText: '이번에는 목록이 좀 어려웠지요. 다시 하면 훨씬 수월해집니다.',
+            note: `살 것 ${grade.total}가지 가운데 ${grade.correct.length}가지를 기억해 담으셨습니다.`,
+          },
+          ...(grade.missed.length > 0
+            ? [
+                {
+                  kind: 'chips',
+                  title: '이것도 있었어요',
+                  tone: 'plain',
+                  items: grade.missed,
+                  note: '다음에 장 보실 때 한 번 떠올려 보세요.',
+                },
+              ]
+            : []),
+          ...(change
+            ? [
+                {
+                  kind: 'note',
+                  title: '계산대',
+                  lines: [
+                    change.isCorrect
+                      ? `거스름돈 ${formatWon(changeQuestion.answer)}, 정확히 맞히셨어요.`
+                      : `거스름돈은 ${formatWon(changeQuestion.answer)}이었어요. 셈이 빠르시네요, 다음엔 더 수월할 거예요.`,
+                    `${formatWon(changeQuestion.total)}어치를 사고 ${formatWon(changeQuestion.bill)}을 냈습니다.`,
+                  ],
+                },
+              ]
+            : []),
+        ],
       },
     })
   }
@@ -163,31 +197,14 @@ export default function Shopping() {
   /* ---------------- (1) 요리 안내 ---------------- */
   if (phase === PHASES.INTRO) {
     return (
-      <>
-        <PageTitle description="장 볼 것을 잠깐 보여 드릴 테니 기억해 주세요.">
-          장보기 미션
-        </PageTitle>
-
-        <Card>
-          <p className="text-body text-muted">오늘 만들 요리는</p>
-          <p className="mt-2 text-title font-bold text-primary-700">{recipe.name}</p>
-          <p className="mt-4 text-body text-muted">
-            잠시 뒤 살 것 {listLength}가지를 {config.exposureSec}초 동안 보여 드립니다.
-          </p>
-        </Card>
-
-        <div className="mt-6">
-          <BigButton
-            onClick={() => {
-              setSecondsLeft(config.exposureSec)
-              setPhase(PHASES.MEMORIZE)
-            }}
-            aria-label="장보기 미션 시작하기"
-          >
-            시작하기
-          </BigButton>
-        </div>
-      </>
+      <GameIntro
+        title="장보기 미션"
+        description="장 볼 것을 잠깐 보여 드릴 테니 기억해 주세요."
+        recipeName={recipe.name}
+        lead={`잠시 뒤 살 것 ${listLength}가지를 ${config.exposureSec}초 동안 보여 드립니다.`}
+        startLabel="장보기 미션 시작하기"
+        onStart={() => setPhase(PHASES.MEMORIZE)}
+      />
     )
   }
 
@@ -200,15 +217,12 @@ export default function Shopping() {
           이것들을 사 오세요
         </PageTitle>
 
-        <Card>
-          <div className="flex items-baseline justify-between gap-4">
-            <span className="text-button font-bold text-ink">남은 시간</span>
-            <span className="text-[2.5em] font-bold leading-none text-primary-700">
-              {secondsLeft}초
-            </span>
-          </div>
-
-          <ul className="mt-6 space-y-3">
+        <CountdownPanel
+          secondsLeft={secondsLeft}
+          onSkip={goShopping}
+          skipLabel="다 외웠으니 진열대로 넘어가기"
+        >
+          <ul className="space-y-3">
             {targets.map((item) => (
               <li
                 key={item.name}
@@ -218,20 +232,7 @@ export default function Shopping() {
               </li>
             ))}
           </ul>
-        </Card>
-
-        <p className="mt-5 text-body text-muted">
-          다 외우셨으면 기다리지 않고 넘어가셔도 됩니다.
-        </p>
-        <div className="mt-3">
-          <BigButton
-            variant="secondary"
-            onClick={goShopping}
-            aria-label="다 외웠으니 진열대로 넘어가기"
-          >
-            다 외웠어요
-          </BigButton>
-        </div>
+        </CountdownPanel>
       </>
     )
   }

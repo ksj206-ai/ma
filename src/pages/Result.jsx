@@ -4,15 +4,23 @@ import PageTitle from '../components/PageTitle.jsx'
 import Card from '../components/Card.jsx'
 import BigButton from '../components/BigButton.jsx'
 import { useAppStore } from '../store/useAppStore.js'
-import { formatWon } from '../lib/recipes.js'
-import { buildBridgeMissionText } from '../games/shoppingLogic.js'
 
 /*
- * 훈련 결과 화면 (SPEC 5장 5번).
+ * 훈련 결과 화면 (SPEC 5장 5번) — 모든 게임이 함께 쓴다.
+ *
+ * 게임마다 보여 줄 내용이 다르므로 게임별 분기를 두는 대신,
+ * 게임이 "무엇을 보여 줄지"를 blocks 로 만들어 넘기고 여기서는 그리기만 한다.
+ * 덕분에 게임이 늘어도 이 파일은 그대로 둘 수 있다.
+ *
+ *   { headline, recipeName, bridgeText, replayPath, blocks: [...] }
+ *
+ *   blocks 종류
+ *     { kind:'chips',   title, tone:'good'|'plain', items:[], note?, emptyText? }
+ *     { kind:'ordered', title, items:[], note? }
+ *     { kind:'note',    title, lines:[] }
  *
  * 카피 원칙 (SPEC 4장 · 3장)
  *  - 잘한 것을 먼저, 크게. 틀린 개수를 강조하지 않는다.
- *  - 놓친 재료는 "이것도 있었어요" 정도로 부드럽게 알려 준다.
  *  - 점수를 의료적으로 해석하지 않는다. 백분율·판정 문구를 쓰지 않는다.
  *
  * 결과 값은 게임에서 라우터 state 로 넘어온다.
@@ -23,88 +31,28 @@ export default function Result() {
   const location = useLocation()
   const addMission = useAppStore((state) => state.addMission)
 
-  const [savedMissionText, setSavedMissionText] = useState(null)
+  const [savedMission, setSavedMission] = useState(false)
 
   const result = location.state
-  if (!result || !result.recipeName) {
+  if (!result || !result.bridgeText) {
     return <Navigate to="/training" replace />
   }
 
-  const { recipeName, correct, missed, total, change } = result
-  const bridgeText = buildBridgeMissionText(recipeName)
-
-  // 격려 위주 카피. 하나도 못 맞혔을 때도 부정적으로 말하지 않는다.
-  const headline =
-    missed.length === 0
-      ? '전부 찾으셨어요!'
-      : correct.length > 0
-        ? '잘하셨어요!'
-        : '오늘도 해내셨어요!'
+  const { headline, recipeName, bridgeText, replayPath, blocks = [] } = result
 
   function handleSaveBridge() {
     addMission(bridgeText)
-    setSavedMissionText(bridgeText)
+    setSavedMission(true)
   }
 
   return (
     <>
-      <PageTitle description={`${recipeName} 장보기를 마쳤습니다.`}>{headline}</PageTitle>
+      <PageTitle description={`${recipeName} 훈련을 마쳤습니다.`}>{headline}</PageTitle>
 
       <div className="space-y-5">
-        <Card title="장바구니에 담으신 것">
-          {correct.length > 0 ? (
-            <ul className="flex flex-wrap gap-3">
-              {correct.map((name) => (
-                <li
-                  key={name}
-                  className="flex items-center gap-2 rounded-pill border-2 border-success bg-primary-50 px-5 py-3 text-button font-bold text-success"
-                >
-                  <span aria-hidden="true">✓</span>
-                  <span>{name}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-body text-muted">
-              이번에는 목록이 좀 어려웠지요. 다시 하면 훨씬 수월해집니다.
-            </p>
-          )}
-
-          <p className="mt-5 text-body text-muted">
-            살 것 {total}가지 가운데 {correct.length}가지를 기억해 담으셨습니다.
-          </p>
-        </Card>
-
-        {missed.length > 0 ? (
-          <Card title="이것도 있었어요">
-            <ul className="flex flex-wrap gap-3">
-              {missed.map((name) => (
-                <li
-                  key={name}
-                  className="rounded-pill border-2 border-line bg-surface px-5 py-3 text-button font-bold text-ink"
-                >
-                  {name}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-5 text-body text-muted">
-              다음에 장 보실 때 한 번 떠올려 보세요.
-            </p>
-          </Card>
-        ) : null}
-
-        {change ? (
-          <Card title="계산대">
-            <p className="text-body text-ink">
-              {change.isCorrect
-                ? `거스름돈 ${formatWon(change.answer)}, 정확히 맞히셨어요.`
-                : `거스름돈은 ${formatWon(change.answer)}이었어요. 셈이 빠르시네요, 다음엔 더 수월할 거예요.`}
-            </p>
-            <p className="mt-3 text-body text-muted">
-              {formatWon(change.total)}어치를 사고 {formatWon(change.bill)}을 냈습니다.
-            </p>
-          </Card>
-        ) : null}
+        {blocks.map((block, index) => (
+          <ResultBlock key={index} block={block} />
+        ))}
 
         {/* 실행 브리지 — 훈련을 실제 생활로 잇는다 (SPEC 6.2) */}
         <Card
@@ -113,7 +61,7 @@ export default function Result() {
         >
           <p className="text-[1.4em] font-bold leading-snug text-ink">{bridgeText}</p>
 
-          {savedMissionText ? (
+          {savedMission ? (
             <p className="mt-5 flex items-center gap-2 text-body font-bold text-success">
               <span aria-hidden="true">✓</span>
               <span>홈 화면의 오늘 미션에 담아 두었습니다.</span>
@@ -131,8 +79,8 @@ export default function Result() {
         </Card>
 
         <BigButton
-          onClick={() => navigate('/training/shopping', { replace: true })}
-          aria-label="장보기 미션 한 번 더 하기"
+          onClick={() => navigate(replayPath, { replace: true })}
+          aria-label="이 훈련 한 번 더 하기"
         >
           한 번 더
         </BigButton>
@@ -146,5 +94,72 @@ export default function Result() {
         </BigButton>
       </div>
     </>
+  )
+}
+
+function ResultBlock({ block }) {
+  if (block.kind === 'chips') {
+    const hasItems = block.items.length > 0
+    return (
+      <Card title={block.title}>
+        {hasItems ? (
+          <ul className="flex flex-wrap gap-3">
+            {block.items.map((item) => (
+              <li
+                key={item}
+                className={[
+                  'flex items-center gap-2 rounded-pill border-2 px-5 py-3 text-button font-bold',
+                  block.tone === 'good'
+                    ? 'border-success bg-primary-50 text-success'
+                    : 'border-line bg-surface text-ink',
+                ].join(' ')}
+              >
+                {block.tone === 'good' ? <span aria-hidden="true">✓</span> : null}
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-body text-muted">{block.emptyText}</p>
+        )}
+        {block.note ? <p className="mt-5 text-body text-muted">{block.note}</p> : null}
+      </Card>
+    )
+  }
+
+  if (block.kind === 'ordered') {
+    return (
+      <Card title={block.title}>
+        <ol className="space-y-3">
+          {block.items.map((item, index) => (
+            <li
+              key={item}
+              className="flex items-start gap-3 rounded-card border-2 border-line bg-surface px-4 py-4"
+            >
+              <span
+                aria-hidden="true"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-pill bg-primary-600 text-body font-bold text-white"
+              >
+                {index + 1}
+              </span>
+              <span className="min-w-0 flex-1 break-keep break-words text-body font-bold text-ink">
+                {item}
+              </span>
+            </li>
+          ))}
+        </ol>
+        {block.note ? <p className="mt-5 text-body text-muted">{block.note}</p> : null}
+      </Card>
+    )
+  }
+
+  return (
+    <Card title={block.title}>
+      {block.lines.map((line) => (
+        <p key={line} className="mt-2 break-keep text-body text-ink first:mt-0">
+          {line}
+        </p>
+      ))}
+    </Card>
   )
 }

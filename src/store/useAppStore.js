@@ -102,6 +102,32 @@ export const useAppStore = create((set, get) => ({
     set({ missions })
   },
 
+  /**
+   * 훈련 한 판이 끝나면 세션 레코드를 붙인다.
+   * 장보기처럼 인지 영역이 둘인 게임은 영역별로 나뉜 여러 개가 한꺼번에 들어온다.
+   */
+  addSessions: (newSessions) => {
+    if (!Array.isArray(newSessions) || newSessions.length === 0) return
+    const sessions = [...get().sessions, ...newSessions]
+    saveState({ ...get().getAppState(), sessions })
+    set({ sessions })
+  },
+
+  /** 실행 브리지 미션을 오늘 날짜로 추가한다. 추가된 미션을 돌려준다. */
+  addMission: (text) => {
+    const today = todayKey()
+    const mission = {
+      id: `mission-${today}-${Date.now()}`,
+      date: today,
+      text: String(text),
+      done: false,
+    }
+    const missions = [...get().missions, mission]
+    saveState({ ...get().getAppState(), missions })
+    set({ missions })
+    return mission
+  },
+
   /** 데이터 초기화 — 확인 단계는 화면(설정)에서 거친 뒤에 호출된다. */
   resetAll: () => {
     const fresh = resetState()
@@ -115,8 +141,12 @@ export const useAppStore = create((set, get) => ({
   },
 }))
 
-/** 오늘 날짜의 실생활 미션 (없으면 null) */
-export function selectTodayMission(state) {
+/**
+ * 오늘 날짜의 실생활 미션 전부.
+ * 자동으로 붙는 하루 미션 외에, 훈련 결과 화면에서 저장한 실행 브리지 미션도
+ * 같은 날짜로 쌓이므로 목록으로 돌려준다.
+ */
+export function selectTodayMissions(state) {
   const today = todayKey()
-  return state.missions.find((mission) => mission.date === today) || null
+  return state.missions.filter((mission) => mission.date === today)
 }

@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import PageTitle from '../components/PageTitle.jsx'
 import Card from '../components/Card.jsx'
 import BigButton from '../components/BigButton.jsx'
-import { useAppStore, selectTodayMission } from '../store/useAppStore.js'
+import { useAppStore, selectTodayMissions } from '../store/useAppStore.js'
 import { useUiStore } from '../store/useUiStore.js'
 import { calcStreak } from '../lib/dates.js'
 import { GAMES } from '../lib/games.js'
@@ -36,7 +36,7 @@ export default function Home() {
 
   const streak = calcStreak(sessions)
   const recommended = pickRecommendedGame(sessions)
-  const todayMission = selectTodayMission({ missions })
+  const todayMissions = selectTodayMissions({ missions })
 
   return (
     <>
@@ -99,39 +99,44 @@ export default function Home() {
           </div>
         </Card>
 
-        {/* 오늘의 실생활 미션 — 훈련을 실제 생활로 잇는 카드 */}
+        {/* 오늘의 실생활 미션 — 훈련을 실제 생활로 잇는 카드.
+            자동으로 붙는 하루 미션 외에, 훈련 결과 화면에서 담은 실행 브리지 미션도 함께 쌓인다. */}
         <Card title="오늘의 실생활 미션">
-          {todayMission ? (
-            <>
-              <p className="text-[1.4em] font-bold leading-snug text-ink">
-                {todayMission.text}
-              </p>
+          {todayMissions.length > 0 ? (
+            <ul className="space-y-6">
+              {todayMissions.map((mission) => (
+                <li key={mission.id}>
+                  <p className="text-[1.4em] font-bold leading-snug text-ink">
+                    {mission.text}
+                  </p>
 
-              <button
-                type="button"
-                aria-pressed={todayMission.done}
-                onClick={() => toggleMission(todayMission.id)}
-                className={[
-                  'mt-6 flex w-full min-h-touch items-center justify-center gap-3',
-                  'rounded-card border-4 px-6 py-4 text-button font-bold',
-                  'transition-colors duration-150',
-                  todayMission.done
-                    ? 'border-success bg-success text-white'
-                    : 'border-primary-300 bg-surface text-primary-700',
-                ].join(' ')}
-              >
-                <span aria-hidden="true" className="text-[1.3em] leading-none">
-                  {todayMission.done ? '✓' : '○'}
-                </span>
-                <span>{todayMission.done ? '해냈어요' : '했어요 표시하기'}</span>
-              </button>
+                  <button
+                    type="button"
+                    aria-pressed={mission.done}
+                    onClick={() => toggleMission(mission.id)}
+                    className={[
+                      'mt-4 flex w-full min-h-touch items-center justify-center gap-3',
+                      'rounded-card border-4 px-6 py-4 text-button font-bold',
+                      'transition-colors duration-150',
+                      mission.done
+                        ? 'border-success bg-success text-white'
+                        : 'border-primary-300 bg-surface text-primary-700',
+                    ].join(' ')}
+                  >
+                    <span aria-hidden="true" className="text-[1.3em] leading-none">
+                      {mission.done ? '✓' : '○'}
+                    </span>
+                    <span>{mission.done ? '해냈어요' : '했어요 표시하기'}</span>
+                  </button>
 
-              <p className="mt-3 text-body text-muted">
-                {todayMission.done
-                  ? '잘하셨어요. 다시 누르면 표시를 되돌릴 수 있습니다.'
-                  : '오늘 중에 하시면 됩니다. 못 하셔도 괜찮아요.'}
-              </p>
-            </>
+                  <p className="mt-3 text-body text-muted">
+                    {mission.done
+                      ? '잘하셨어요. 다시 누르면 표시를 되돌릴 수 있습니다.'
+                      : '오늘 중에 하시면 됩니다. 못 하셔도 괜찮아요.'}
+                  </p>
+                </li>
+              ))}
+            </ul>
           ) : (
             <p className="text-body text-muted">오늘의 미션을 준비하고 있어요.</p>
           )}

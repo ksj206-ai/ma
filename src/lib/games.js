@@ -12,12 +12,16 @@ export const GAMES = {
     name: '장보기 미션',
     summary: '살 것을 기억했다가 진열대에서 찾아 담아요.',
     domains: ['작업기억', '계산'],
+    route: '/training/shopping',
+    available: true,
   },
   cooking: {
     id: 'cooking',
     name: '요리 순서 맞추기',
     summary: '요리하는 순서를 차례대로 골라 봐요.',
     domains: ['순서화', '실행기능', '작업기억'],
+    route: null,
+    available: false, // 마일스톤 4
   },
 }
 

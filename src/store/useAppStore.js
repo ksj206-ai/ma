@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { loadState, resetState, saveState } from '../lib/storage.js'
 import { todayKey } from '../lib/dates.js'
+import { nextLevelForGame } from '../lib/adaptive.js'
 import { useUiStore } from './useUiStore.js'
 
 /*
@@ -103,14 +104,21 @@ export const useAppStore = create((set, get) => ({
   },
 
   /**
-   * 훈련 한 판이 끝나면 세션 레코드를 붙인다.
+   * 훈련 한 판이 끝나면 세션 레코드를 붙이고, 그 판을 치른 게임의 다음 레벨을
+   * 조용히 계산해 둔다(SPEC 4·7장 — 화면 어디에도 이 변화를 알리지 않는다).
    * 장보기처럼 인지 영역이 둘인 게임은 영역별로 나뉜 여러 개가 한꺼번에 들어온다.
    */
   addSessions: (newSessions) => {
     if (!Array.isArray(newSessions) || newSessions.length === 0) return
     const sessions = [...get().sessions, ...newSessions]
-    saveState({ ...get().getAppState(), sessions })
-    set({ sessions })
+
+    const gameId = newSessions[0].gameId
+    const playedLevel = newSessions[0].level
+    const nextLevel = nextLevelForGame({ sessions, gameId, currentLevel: playedLevel })
+    const levels = { ...get().levels, [gameId]: nextLevel }
+
+    saveState({ ...get().getAppState(), sessions, levels })
+    set({ sessions, levels })
   },
 
   /** 실행 브리지 미션을 오늘 날짜로 추가한다. 추가된 미션을 돌려준다. */

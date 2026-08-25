@@ -15,9 +15,10 @@ import { buildSessions, elapsedSec } from './gameCommon.js'
 import { useCountdown } from './useCountdown.js'
 import {
   buildBridgeMissionText,
-  buildChangeQuestion,
+  buildChangeQuestions,
   buildRound,
   gradeCart,
+  gradeChangeQuestions,
   getLevelConfig,
 } from './shoppingLogic.js'
 
@@ -45,7 +46,7 @@ export default function Shopping() {
   const levels = useAppStore((state) => state.levels)
   const addSessions = useAppStore((state) => state.addSessions)
 
-  // 저장된 레벨을 읽어 쓰기만 한다. 성적에 따른 조정은 마일스톤 5.
+  // 저장된 레벨을 읽어 쓰기만 한다. 성적에 따른 조정은 세션 저장 뒤 store 가 한다(lib/adaptive.js).
   const level = getLevelConfig(levels && levels.shopping).level
 
   // 한 판 구성은 처음 한 번만 만든다.
@@ -54,7 +55,7 @@ export default function Shopping() {
 
   const [phase, setPhase] = useState(PHASES.INTRO)
   const [cart, setCart] = useState([])
-  const [changeChoice, setChangeChoice] = useState(null)
+  const [changeChoices, setChangeChoices] = useState([])
 
   // 소요 시간 측정용. 렌더와 무관하므로 ref 에 둔다.
   const shopStartedAt = useRef(0)
@@ -62,10 +63,12 @@ export default function Shopping() {
   const memoryDurationRef = useRef(0)
   const gradeRef = useRef(null)
 
-  const changeQuestion = useMemo(
-    () => (config.hasChange ? buildChangeQuestion(targets) : null),
-    [config.hasChange, targets]
+  const hasChange = config.changeCount > 0
+  const changeQuestions = useMemo(
+    () => (hasChange ? buildChangeQuestions(targets, config) : []),
+    [hasChange, config, targets]
   )
+  const allChangeAnswered = changeQuestions.every((_, index) => changeChoices[index] != null)
 
   // 노출 카운트다운은 요리 게임과 공통 훅을 쓴다 (화면을 벗어나면 알아서 멈춘다).
   const secondsLeft = useCountdown(
@@ -74,7 +77,7 @@ export default function Shopping() {
     () => goShopping()
   )
 
-  const totalSteps = config.hasChange ? 3 : 2
+  const totalSteps = hasChange ? 3 : 2
   const currentStep = phase === PHASES.CHECKOUT ? 3 : phase === PHASES.SHOP ? 2 : 1
   const listLength = Math.min(config.listLength, recipe.ingredients.length)
 
@@ -93,7 +96,7 @@ export default function Shopping() {
   }
 
   /** 세션을 저장하고 결과 화면으로 넘긴다. */
-  function finish(change) {
+  function finish(changeGrade) {
     const grade = gradeRef.current
     const now = Date.now()
 
@@ -112,12 +115,12 @@ export default function Shopping() {
             accuracy: grade.accuracy,
             durationSec: memoryDurationRef.current,
           },
-          ...(change
+          ...(changeGrade
             ? [
                 {
                   key: 'calc',
                   domain: '계산',
-                  accuracy: change.isCorrect ? 1 : 0,
+                  accuracy: changeGrade.accuracy,
                   durationSec: elapsedSec(checkoutStartedAt.current),
                 },
               ]
@@ -158,16 +161,21 @@ export default function Shopping() {
                 },
               ]
             : []),
-          ...(change
+          ...(changeGrade
             ? [
                 {
                   kind: 'note',
                   title: '계산대',
                   lines: [
-                    change.isCorrect
-                      ? `거스름돈 ${formatWon(changeQuestion.answer)}, 정확히 맞히셨어요.`
-                      : `거스름돈은 ${formatWon(changeQuestion.answer)}이었어요. 셈이 빠르시네요, 다음엔 더 수월할 거예요.`,
-                    `${formatWon(changeQuestion.total)}어치를 사고 ${formatWon(changeQuestion.bill)}을 냈습니다.`,
+                    changeGrade.correctCount === changeGrade.total
+                      ? `잔돈 문제 ${changeGrade.total}개를 모두 맞히셨어요.`
+                      : `잔돈 문제 ${changeGrade.total}개 가운데 ${changeGrade.correctCount}개를 맞히셨어요.`,
+                    ...changeGrade.results
+                      .filter((item) => !item.isCorrect)
+                      .map(
+                        (item) =>
+                          `${formatWon(item.bill)}을 냈을 때 거스름돈은 ${formatWon(item.answer)}이었어요.`
+                      ),
                   ],
                 },
               ]
@@ -182,7 +190,7 @@ export default function Shopping() {
     gradeRef.current = gradeCart(targets, cart)
     memoryDurationRef.current = elapsedSec(shopStartedAt.current)
 
-    if (config.hasChange) {
+    if (hasChange) {
       setPhase(PHASES.CHECKOUT)
       checkoutStartedAt.current = Date.now()
       return
@@ -190,8 +198,16 @@ export default function Shopping() {
     finish(null)
   }
 
+  function chooseChangeAnswer(questionIndex, option) {
+    setChangeChoices((current) => {
+      const next = [...current]
+      next[questionIndex] = option
+      return next
+    })
+  }
+
   function handleConfirmChange() {
-    finish({ isCorrect: changeChoice === changeQuestion.answer })
+    finish(gradeChangeQuestions(changeQuestions, changeChoices))
   }
 
   /* ---------------- (1) 요리 안내 ---------------- */
@@ -296,37 +312,39 @@ export default function Shopping() {
 
         <div className="mt-5 flex items-center justify-between gap-4 text-button font-bold text-ink">
           <span>합계</span>
-          <span className="text-primary-700">{formatWon(changeQuestion.total)}</span>
+          <span className="text-primary-700">{formatWon(changeQuestions[0]?.total)}</span>
         </div>
       </Card>
 
-      <div className="mt-6">
-        <Card>
-          <p className="text-[1.4em] font-bold leading-snug text-ink">
-            {formatWon(changeQuestion.bill)}을 내면 거스름돈은 얼마일까요?
-          </p>
+      <div className="mt-6 space-y-5">
+        {changeQuestions.map((question, questionIndex) => (
+          <Card key={question.bill}>
+            <p className="text-[1.4em] font-bold leading-snug text-ink">
+              {formatWon(question.bill)}을 내면 거스름돈은 얼마일까요?
+            </p>
 
-          <div className="mt-5 space-y-4">
-            {changeQuestion.options.map((option) => (
-              <ChoiceButton
-                key={option}
-                selected={changeChoice === option}
-                onClick={() => setChangeChoice(option)}
-              >
-                {formatWon(option)}
-              </ChoiceButton>
-            ))}
-          </div>
-        </Card>
-      </div>
+            <div className="mt-5 space-y-4">
+              {question.options.map((option) => (
+                <ChoiceButton
+                  key={option}
+                  selected={changeChoices[questionIndex] === option}
+                  onClick={() => chooseChangeAnswer(questionIndex, option)}
+                >
+                  {formatWon(option)}
+                </ChoiceButton>
+              ))}
+            </div>
+          </Card>
+        ))}
 
-      <div className="mt-6">
         <BigButton
           onClick={handleConfirmChange}
-          disabled={changeChoice === null}
+          disabled={!allChangeAnswered}
           aria-label="고른 거스름돈으로 계산 마치기"
         >
-          {changeChoice === null ? '하나를 골라 주세요' : '계산 마치기'}
+          {allChangeAnswered
+            ? '계산 마치기'
+            : `${changeQuestions.length - changeChoices.filter((choice) => choice != null).length}개 더 골라 주세요`}
         </BigButton>
       </div>
     </>

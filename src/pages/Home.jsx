@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import PageTitle from '../components/PageTitle.jsx'
 import Card from '../components/Card.jsx'
 import BigButton from '../components/BigButton.jsx'
+import ProfileChart from '../components/ProfileChart.jsx'
 import { useAppStore, selectTodayMissions } from '../store/useAppStore.js'
 import { useUiStore } from '../store/useUiStore.js'
 import { calcStreak } from '../lib/dates.js'
@@ -18,7 +19,8 @@ import { speak } from '../lib/speech.js'
 /**
  * 오늘의 추천 훈련.
  * 지금은 "마지막에 한 것과 다른 것을 권한다" 수준의 단순 교대다.
- * 성적을 보고 난이도를 조정하는 적응형 로직은 마일스톤 5 에서 붙는다.
+ * (게임별 난이도를 성적에 따라 조정하는 적응형 로직은 lib/adaptive.js 에 있다.
+ *  이 함수는 "다음에 어떤 게임을 권할지"만 정하며, 그 로직과는 별개다.)
  */
 function pickRecommendedGame(sessions) {
   const last = sessions[sessions.length - 1]
@@ -141,6 +143,8 @@ export default function Home() {
             <p className="text-body text-muted">오늘의 미션을 준비하고 있어요.</p>
           )}
         </Card>
+
+        <ProfileChart sessions={sessions} />
 
         <BigButton
           variant="secondary"

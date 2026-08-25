@@ -46,7 +46,7 @@ export default function Cooking() {
   const levels = useAppStore((state) => state.levels)
   const addSessions = useAppStore((state) => state.addSessions)
 
-  // 저장된 레벨을 읽어 쓰기만 한다. 성적에 따른 조정은 마일스톤 5.
+  // 저장된 레벨을 읽어 쓰기만 한다. 성적에 따른 조정은 세션 저장 뒤 store 가 한다(lib/adaptive.js).
   const level = getLevelConfig(levels && levels.cooking).level
 
   const round = useMemo(() => buildRound(level), [level])

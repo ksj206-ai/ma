@@ -8,7 +8,7 @@ import { buildSeedLevels, buildSeedMissions, buildSeedSessions } from './seed.js
  *   profile  UserProfile { name, ageBand, largeText, voice, createdAt } | null
  *   sessions Session[]          { id, date, gameId, courseId, domain, level, score, accuracy, durationSec }
  *   missions RealWorldMission[] { id, date, text, done }
- *   levels   { [gameId]: number }  게임별 난이도. 조정 로직은 마일스톤 5.
+ *   levels   { [gameId]: number }  게임별 난이도. 조정 로직은 lib/adaptive.js (마일스톤 5).
  *
  * 저장소는 언제든 실패할 수 있다(사생활 보호 모드, 용량 초과, 손상된 JSON).
  * 어떤 경우에도 예외를 밖으로 던지지 않고 초기 상태로 복구한다. 앱이 죽으면 안 된다.

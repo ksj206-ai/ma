@@ -8,7 +8,7 @@ import { resolveLevelConfig, shuffle } from './gameCommon.js'
  * 레벨 clamp · 섞기 · 세션 레코드 생성은 장보기와 공통이라 gameCommon.js 에 있다.
  *
  * 난이도 레버(SPEC 6.2): 단계 수 · 노출 시간 · 방해 단계 수 · 재료 계량 포함 여부
- * ※ levels 에 저장된 값을 읽어 쓰기만 한다. 적응형 조정은 마일스톤 5.
+ * ※ levels 에 저장된 값을 읽어 쓰기만 한다. 적응형 조정은 lib/adaptive.js.
  */
 export const COOKING_LEVELS = {
   1: { stepCount: 3, exposureSec: 10, distractors: 0, hasMeasure: false },

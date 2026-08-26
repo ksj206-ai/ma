@@ -61,7 +61,7 @@ src/
 │   ├── Home.jsx         오늘의 추천 훈련 · 스트릭 · 실생활 미션 · 기능 프로파일
 │   ├── Training.jsx     훈련(게임) 목록
 │   ├── Result.jsx       모든 게임이 공유하는 결과 화면 + 실행 브리지
-│   ├── Family.jsx       가족 모드(보호자 리포트) — 기능 프로파일까지 구현, 나머지는 M6
+│   ├── Family.jsx       가족 모드(보호자 주간 리포트) — 요약·차트·추이·미션·하이라이트
 │   └── Settings.jsx     글자 크게 · 음성 안내 · 데이터 초기화 · 웰니스 고지
 │
 ├── games/           게임(훈련) 구현 — 화면(.jsx)과 순수 로직(*Logic.js)을 분리
@@ -76,16 +76,18 @@ src/
 │   ├── CountdownPanel.jsx, GameIntro.jsx, ShelfItem.jsx 게임 화면 전용 조각
 │   ├── AppLayout.jsx, BottomTabs.jsx                    하단 탭 3개짜리 공통 레이아웃
 │   ├── WellnessNotice.jsx                               웰니스 고지 문구(단일 출처)
-│   └── ProfileChart.jsx                                 기능 프로파일 차트 (홈·가족 공용)
+│   ├── ProfileChart.jsx                                 기능 프로파일 차트 (홈·가족 공용)
+│   └── WeeklyTrendChart.jsx                             주별 훈련 흐름 막대 (가족 전용)
 │
 ├── lib/              화면에 매이지 않는 순수 로직·데이터
 │   ├── storage.js    localStorage 접근이 허용된 유일한 파일
 │   ├── seed.js        최초 실행 시 채우는 더미 세션·미션·레벨
 │   ├── adaptive.js    적응형 난이도 조정 (마일스톤 5)
 │   ├── profile.js     기능 프로파일 점수 산출 (마일스톤 5)
+│   ├── report.js      가족 리포트 자료 모으기 (마일스톤 6 — 계산은 위 두 파일 재사용)
 │   ├── recipes.js     요리 데이터셋 (장보기·요리 게임이 함께 사용)
 │   ├── games.js       게임 메타데이터(이름·요약·영역 태그·라우트)
-│   ├── dates.js       로컬 날짜 키·스트릭 계산
+│   ├── dates.js       로컬 날짜 키·스트릭·주 단위 계산
 │   ├── korean.js      한국어 조사(을/를, 은/는) 처리
 │   └── speech.js       SpeechSynthesis 얇은 래퍼
 │
@@ -234,7 +236,7 @@ AppState         { schemaVersion, profile, sessions[], missions[], levels{} }
 | 3 | 게임 1(장보기) + `recipes.js` + 세션 저장 + 결과 화면 + 실행 브리지 | ✅ |
 | 4 | 게임 2(요리 레시피) + 실행 브리지 연동 | ✅ |
 | 5 | 적응형 난이도 + 기능 프로파일 차트 | ✅ |
-| 6 | 가족 모드 리포트 대시보드(Recharts) | 예정 |
+| 6 | 가족 모드 리포트 대시보드(Recharts) | ✅ |
 | 7 | PWA + 접근성 점검 | 예정 |
 | 8 | 게임 3(길찾기) | 예정 |
 | 9 | 코스 모드 "장 보러 가는 날" | 예정 |

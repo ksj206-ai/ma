@@ -58,3 +58,34 @@ export function calcStreak(sessions) {
   }
   return streak
 }
+
+/*
+ * 주 단위 헬퍼 — 가족 리포트(마일스톤 6)의 "이번 주" 기준.
+ * 주의 시작은 월요일로 둔다. 'YYYY-MM-DD' 문자열은 사전순 비교가 곧 시간순 비교이므로
+ * 주 범위를 고를 때 별도의 파싱 없이 문자열 비교(>=)만으로 걸러 낼 수 있다.
+ */
+
+/** 그 날짜가 속한 주의 월요일 'YYYY-MM-DD' */
+export function weekStartKey(dateKey) {
+  const [y, m, d] = dateKey.split('-').map(Number)
+  const date = new Date(y, m - 1, d, 12)
+  const weekdayFromMonday = (date.getDay() + 6) % 7 // 월=0 … 일=6
+  date.setDate(date.getDate() - weekdayFromMonday)
+  return toDateKey(date)
+}
+
+/** 이번 주 월요일 'YYYY-MM-DD' */
+export function thisWeekStartKey() {
+  return weekStartKey(todayKey())
+}
+
+/** n주 전 주의 월요일 'YYYY-MM-DD' (0 이면 이번 주) */
+export function weekStartKeyWeeksAgo(n) {
+  return weekStartKey(dateKeyDaysAgo(n * 7))
+}
+
+/** 'YYYY-MM-DD' -> '8/17' (차트 축처럼 좁은 자리에 쓰는 짧은 표기) */
+export function formatShortDate(dateKey) {
+  const [, m, d] = dateKey.split('-').map(Number)
+  return `${m}/${d}`
+}

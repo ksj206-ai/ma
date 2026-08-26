@@ -38,11 +38,21 @@ const SESSION_PLAN = [
   { daysAgo: 0, gameId: 'shopping', domain: '작업기억', level: 2, score: 86, accuracy: 0.89, durationSec: 165 },
 ]
 
-// 실행 브리지 미션 (SPEC 9장 RealWorldMission) — 일부는 이미 해낸 상태로 둔다.
+/*
+ * 실행 브리지 미션 (SPEC 9장 RealWorldMission) — 일부는 이미 해낸 상태로 둔다.
+ *
+ * 마일스톤 6 보완: 해낸 미션 하나를 daysAgo 0(오늘)에 둔다.
+ * 가족 리포트는 "이번 주"(월요일 시작)를 기준으로 보는데, daysAgo 를 며칠 전으로 잡으면
+ * 앱을 여는 요일에 따라 그 미션이 지난주로 밀려 버린다. 예를 들어 수요일에 열면
+ * daysAgo 3 은 이미 지난주다. 오늘 날짜에 하나를 두면 무슨 요일에 열어도
+ * "이번 주에 해내신 미션"이 반드시 하나는 보인다.
+ * (홈 화면에도 완료 표시가 된 미션과 아직 안 한 미션이 하나씩 보이게 되는 부수 효과가 있다)
+ */
 const MISSION_PLAN = [
   { daysAgo: 5, text: '장 보러 가서 살 것 세 가지를 적지 않고 외워서 사 오기', done: true },
-  { daysAgo: 3, text: '저녁에 미역국을 끓여 가족과 나눠 먹기', done: true },
+  { daysAgo: 3, text: '동네 한 바퀴 걷고 오는 길에 본 가게 세 곳 떠올리기', done: true },
   { daysAgo: 1, text: '가족에게 전화해서 오늘 있었던 일 세 가지 이야기하기', done: false },
+  { daysAgo: 0, text: '저녁에 미역국을 끓여 가족과 나눠 먹기', done: true },
   { daysAgo: 0, text: '냉장고를 열어 보기 전에, 안에 있는 재료 세 가지를 떠올려 보기', done: false },
 ]
 

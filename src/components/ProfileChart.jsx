@@ -29,8 +29,20 @@ import { useUiStore } from '../store/useUiStore.js'
  *  - "글자 크게"가 켜지면 rem 기반 CSS는 저절로 커지지만, Recharts 에 넘기는 폰트 크기·
  *    축 너비는 숫자(px)라 자동으로 따라오지 않는다. 그래서 largeText 값을 직접 읽어
  *    같은 1.25배를 수동으로 곱해 준다.
+ *
+ * 마일스톤 6: 제목·설명만 화면별로 바꿔 끼울 수 있게 열어 두었다. 가족 화면은 보호자가
+ * 보는 자리라 "기능 프로파일"보다 활동 요약처럼 읽히는 제목이 맞기 때문이다(SPEC 4장).
+ * 계산과 차트는 그대로 하나를 쓴다 — 화면마다 다른 점수가 나오면 안 된다.
  */
-export default function ProfileChart({ sessions }) {
+const DEFAULT_TITLE = '기능 프로파일'
+const DEFAULT_DESCRIPTION =
+  '영역별로 요즘 어떻게 해내고 계신지 보여 드려요. 쉬셨다고 내려가지 않아요.'
+
+export default function ProfileChart({
+  sessions,
+  title = DEFAULT_TITLE,
+  description = DEFAULT_DESCRIPTION,
+}) {
   const largeText = useUiStore((state) => state.largeText)
   const scale = largeText ? 1.25 : 1
 
@@ -40,17 +52,14 @@ export default function ProfileChart({ sessions }) {
 
   if (profiles.length === 0) {
     return (
-      <Card title="기능 프로파일">
+      <Card title={title}>
         <p className="text-body text-muted">훈련을 시작하면 여기에 기록이 모여요.</p>
       </Card>
     )
   }
 
   return (
-    <Card
-      title="기능 프로파일"
-      description="영역별로 요즘 어떻게 해내고 계신지 보여 드려요. 쉬셨다고 내려가지 않아요."
-    >
+    <Card title={title} description={description}>
       {ready.length > 0 ? (
         <>
           {ready.length <= 3 ? (

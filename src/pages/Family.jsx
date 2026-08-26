@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import PageTitle from '../components/PageTitle.jsx'
 import Card from '../components/Card.jsx'
 import BigButton from '../components/BigButton.jsx'
-import ProfileChart from '../components/ProfileChart.jsx'
-import WeeklyTrendChart from '../components/WeeklyTrendChart.jsx'
+import ActivityMixChart from '../components/ActivityMixChart.jsx'
+import CumulativeTrainingChart from '../components/CumulativeTrainingChart.jsx'
 import { useAppStore } from '../store/useAppStore.js'
 import { buildFamilyReport } from '../lib/report.js'
 
@@ -17,13 +17,20 @@ import { buildFamilyReport } from '../lib/report.js'
  * [이 화면의 성격 — SPEC 4장]
  * 여기는 "이번 주에 무엇을 하셨는가"를 보여 주는 활동 요약이지 판정이 아니다. 그래서
  *  - 판정·비교 표현을 쓰지 않는다 (위·아래를 가르는 말, 또래 대비 같은 비교).
- *  - 점수에 등급·신호등·백분위를 붙이지 않는다. 낮은 축에 해석이나 경고색을 붙이지 않는다.
+ *  - 등급·신호등·백분위를 붙이지 않는다. 적게 하신 영역에 해석이나 경고색을 붙이지 않는다.
  *  - "~하셔야 합니다" 같은 지시·경고 문구를 쓰지 않는다.
  *  - 해낸 것을 세고, 하지 않은 것은 세지 않는다.
  * 화면 하단의 웰니스 고지는 AppLayout 이 모든 화면에 공통으로 깔아 준다(마일스톤 2).
  *
- * 자료는 전부 lib/report.js 가 만든다. 점수는 마일스톤 5의 computeDomainProfiles,
- * 연속 사용일은 calcStreak 를 그대로 쓰며 이 화면에서 다시 계산하지 않는다.
+ * [마일스톤 7 — 점수를 걷어냈다]
+ * 이 화면에는 영역별 0~100 점수가 나오지 않는다. 보호자는 그 숫자를 "몇 점짜리
+ * 상태인가"로 읽기 쉽고, 그건 우리가 하지 않기로 한 판정이다(SPEC 8장). 대신
+ * ActivityMixChart(이번 주 영역별 횟수)와 CumulativeTrainingChart(누적 횟수)로
+ * 활동량만 보여 준다. 점수 자체는 홈 화면(ProfileChart)에 그대로 남아 있다 —
+ * 본인이 자기 흐름을 보는 자리와, 가족이 활동을 지켜보는 자리는 다르기 때문이다.
+ *
+ * 자료는 전부 lib/report.js 가 만든다. 연속 사용일은 dates.js 의 calcStreak 를
+ * 그대로 쓰며 이 화면에서 다시 계산하지 않는다.
  */
 export default function Family() {
   const navigate = useNavigate()
@@ -58,21 +65,8 @@ export default function Family() {
 
       <div className="space-y-5">
         <WeekSummaryCard summary={report.summary} />
-
-        <ProfileChart
-          sessions={sessions}
-          title="요즘 활동 영역"
-          description="어떤 활동을 하셨는지 영역별로 모아 보여 드려요. 쉬셨다고 내려가지 않아요."
-        />
-
-        {report.trend.show ? (
-          <WeeklyTrendChart rows={report.trend.rows} />
-        ) : (
-          <Card title="주별 훈련 흐름">
-            <p className="text-body text-muted">{report.trend.reason}</p>
-          </Card>
-        )}
-
+        <ActivityMixChart activity={report.activity} />
+        <CumulativeTrainingChart cumulative={report.cumulative} />
         <MissionCard missions={report.missions} />
         <HighlightCard highlights={report.highlights} />
       </div>

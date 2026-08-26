@@ -17,6 +17,30 @@ import { computeDomainProfiles, MIN_SESSIONS_FOR_SCORE } from '../lib/profile.js
 import { useUiStore } from '../store/useUiStore.js'
 
 /*
+ * 차트 선 색 (마일스톤 7 접근성 점검).
+ * 축선은 그래프의 구조라 WCAG 1.4.11 의 비텍스트 대비 3:1 을 지켜야 해서 primary-400
+ * (흰 카드 위 4.09:1)을 쓴다. 안쪽 눈금 격자는 값을 읽는 데 쓰이지 않는 장식이고
+ * (횟수·점수는 차트 아래 목록에 글자로 항상 나온다) 진하면 오히려 그래프를 가려서
+ * 옅은 line(#C9D4E4)을 그대로 둔다.
+ */
+/*
+ * isAnimationActive={false} (마일스톤 7 점검에서 잡은 버그)
+ *
+ * Recharts 는 기본으로 그래프를 "자라나는" 애니메이션으로 그린다. 그런데 이 앱에서는
+ * 그 애니메이션이 첫 프레임에서 멈춰 버렸다. 레이더는 반지름 0(가운데 점 하나)에
+ * 머물러 사실상 보이지 않았고, 홈의 기능 프로파일 차트가 마일스톤 5부터 줄곧 그 상태였다.
+ * 실제 렌더된 도형의 반지름을 재 보고서야 발견했다 — 화면만 보면 "그래프가 좀 작네"로
+ * 넘어가기 쉬운 종류의 버그다.
+ *
+ * 애니메이션을 끄면 처음부터 최종 모양으로 그려져 문제가 사라진다. 애초에 SPEC 3장이
+ * "애니메이션은 절제하고 느리게", 12장이 "과도한 애니메이션 금지"라고 못 박은 만큼,
+ * 고령자용 화면에서 차트가 스스로 자라날 이유도 없다.
+ */
+
+const AXIS_LINE = '#4F7FC0'
+const GRID_LINE = '#C9D4E4'
+
+/*
  * 기능 프로파일 차트 (SPEC 7장) — 마일스톤 5. 홈·가족 화면이 함께 쓴다.
  *
  * 지키는 규칙
@@ -29,6 +53,10 @@ import { useUiStore } from '../store/useUiStore.js'
  *  - "글자 크게"가 켜지면 rem 기반 CSS는 저절로 커지지만, Recharts 에 넘기는 폰트 크기·
  *    축 너비는 숫자(px)라 자동으로 따라오지 않는다. 그래서 largeText 값을 직접 읽어
  *    같은 1.25배를 수동으로 곱해 준다.
+ *  - (마일스톤 7) 그림 자체는 aria-hidden + accessibilityLayer={false} 로 포커스에서 뺀다.
+ *    Recharts 가 차트 <svg> 에 기본으로 붙이는 tabIndex=0 · role="application" 은 이름이
+ *    없어서, Tab 을 누르면 아무것도 알려 주지 않는 칸에 포커스가 멈춘다. 값은 바로 아래
+ *    글자 목록에 그대로 있으므로 그림은 장식으로 두는 편이 낫다.
  *
  * 마일스톤 6: 제목·설명만 화면별로 바꿔 끼울 수 있게 열어 두었다. 가족 화면은 보호자가
  * 보는 자리라 "기능 프로파일"보다 활동 요약처럼 읽히는 제목이 맞기 때문이다(SPEC 4장).
@@ -116,15 +144,15 @@ function BarProfile({ data, scale }) {
     // 폭을 결정하는 값(scale)이 바뀔 때 통째로 다시 그리게 해 잘리는 걸 막는다.
     // overflow-x-auto 는 혹시라도 못 잡아낸 경우에 카드 밖 페이지 전체가 가로로
     // 밀리지 않고, 카드 안에서만 스크롤되게 막는 안전장치다.
-    <div className="overflow-x-auto">
+    <div aria-hidden="true" className="overflow-x-auto">
       <ResponsiveContainer key={scale} width="100%" height={height}>
-        <BarChart data={data} layout="vertical" margin={{ top: 4, right: 32, bottom: 4, left: 0 }}>
-          <CartesianGrid horizontal={false} stroke="#C9D4E4" />
+        <BarChart data={data} accessibilityLayer={false} layout="vertical" margin={{ top: 4, right: 32, bottom: 4, left: 0 }}>
+          <CartesianGrid horizontal={false} stroke={GRID_LINE} />
           <XAxis
             type="number"
             domain={[0, 100]}
             tick={{ fontSize: tickFontSize, fill: '#3D4A63' }}
-            axisLine={{ stroke: '#C9D4E4' }}
+            axisLine={{ stroke: AXIS_LINE }}
             tickLine={false}
           />
           <YAxis
@@ -132,10 +160,10 @@ function BarProfile({ data, scale }) {
             dataKey="domain"
             width={yAxisWidth}
             tick={{ fontSize: tickFontSize, fontWeight: 700, fill: '#111C33' }}
-            axisLine={{ stroke: '#C9D4E4' }}
+            axisLine={{ stroke: AXIS_LINE }}
             tickLine={false}
           />
-          <Bar dataKey="score" fill="#1F4B87" radius={[0, 8, 8, 0]} barSize={barSize} />
+          <Bar isAnimationActive={false} dataKey="score" fill="#1F4B87" radius={[0, 8, 8, 0]} barSize={barSize} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -149,10 +177,10 @@ function RadarProfile({ data, scale }) {
 
   return (
     // key={scale} · overflow-x-auto 이유는 BarProfile 주석 참고.
-    <div className="overflow-x-auto">
+    <div aria-hidden="true" className="overflow-x-auto">
       <ResponsiveContainer key={scale} width="100%" height={height}>
-        <RadarChart data={data} outerRadius="62%" margin={{ top: 16, right: 28, bottom: 16, left: 28 }}>
-          <PolarGrid stroke="#C9D4E4" />
+        <RadarChart data={data} accessibilityLayer={false} outerRadius="62%" margin={{ top: 16, right: 28, bottom: 16, left: 28 }}>
+          <PolarGrid stroke={GRID_LINE} />
           <PolarAngleAxis
             dataKey="domain"
             tick={{ fontSize: tickFontSize, fontWeight: 700, fill: '#111C33' }}
@@ -163,7 +191,7 @@ function RadarProfile({ data, scale }) {
             tick={{ fontSize: radiusTickFontSize, fill: '#3D4A63' }}
             axisLine={false}
           />
-          <Radar dataKey="score" stroke="#1F4B87" fill="#1F4B87" fillOpacity={0.35} strokeWidth={3} />
+          <Radar isAnimationActive={false} dataKey="score" stroke="#1F4B87" fill="#1F4B87" fillOpacity={0.35} strokeWidth={3} />
         </RadarChart>
       </ResponsiveContainer>
     </div>

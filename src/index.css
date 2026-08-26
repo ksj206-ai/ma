@@ -27,10 +27,24 @@
     color-scheme: light;
   }
 
-  /* 키보드 포커스는 크고 명확하게 (SPEC 3.1) */
+  /*
+   * 키보드 포커스는 크고 명확하게 (SPEC 3.1)
+   *
+   * [마일스톤 7 — 주황에서 파랑으로]
+   * 원래 포인트 컬러인 주황(accent-500 #C2410C)을 썼다. 어두운 네이비 버튼 위에서도
+   * 잘 보였기 때문인데, 이 앱에서 주황·빨강 계열은 오답과 되돌릴 수 없는 행동(데이터
+   * 초기화)에만 쓰인다. 그래서 Tab 으로 옮겨 다니기만 해도 가는 곳마다 경고가 켜지는
+   * 것처럼 읽힌다. 실수해도 벌점을 주지 않는다는 원칙(SPEC 3장)과 어긋난다.
+   *
+   * 중립적인 파랑(primary-500)으로 바꾸되, 색만 바꾸면 같은 계열인 네이비 버튼
+   * (primary-600) 위에서 링이 묻힌다. 그래서 요소와 링 사이 3px 틈을 흰 테두리로
+   * 채운다 — 밝은 배경에서는 배경과 같아 보이지 않고, 어두운 버튼 위에서는 흰 띠가
+   * 생겨 링이 항상 떠 보인다. 어떤 배경에서도 흰색 대비 6.4:1 이 유지된다.
+   */
   :focus-visible {
-    outline: 4px solid theme('colors.accent.500');
+    outline: 4px solid theme('colors.primary.500');
     outline-offset: 3px;
+    box-shadow: 0 0 0 3px theme('colors.surface');
     border-radius: 0.5rem;
   }
 

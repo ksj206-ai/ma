@@ -269,7 +269,9 @@ export default function Cooking() {
                           // 글자가 한 줄에 하나씩 세로로 쌓인다. 그래서 아래위 두 줄로 나눈다.
                           'flex w-full min-h-touch flex-col gap-2',
                           'rounded-card border-4 border-primary-700 bg-primary-100 px-3 py-4',
-                          'text-left transition-colors duration-150',
+                          // text-button: 이 칸도 누를 수 있는 선택지다. 글자 크기를 지정하지
+                          // 않으면 본문(20px)을 물려받아 "버튼 24px 이상"(SPEC 3장)에 미달한다.
+                          'text-left text-button transition-colors duration-150',
                         ].join(' ')}
                       >
                         <span className="flex w-full items-start gap-3">
@@ -285,7 +287,7 @@ export default function Cooking() {
                         </span>
                         <span
                           aria-hidden="true"
-                          className="self-end text-body font-bold text-primary-700"
+                          className="self-end text-button font-bold text-primary-700"
                         >
                           빼기
                         </span>

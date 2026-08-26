@@ -15,6 +15,8 @@ export default function ShelfItem({ name, picked, onToggle }) {
       type="button"
       aria-pressed={picked}
       aria-label={picked ? `${name} 빼기` : `${name} 담기`}
+      // 이벤트를 그대로 넘긴다 — 부모가 이 버튼의 위치를 재서 "장바구니로 이동" 효과의
+      // 출발점으로 쓴다(마일스톤 8). 효과가 없어도 담기 자체는 그대로 동작한다.
       onClick={onToggle}
       className={[
         'flex w-full min-h-touch flex-col items-center justify-center gap-2',

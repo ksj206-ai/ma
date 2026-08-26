@@ -16,6 +16,36 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="두뇌 건강" />
 
+    <!--
+      링크 미리보기 (Open Graph / Twitter) — 마일스톤 8
+      카톡·문자로 자녀에게 링크를 보내는 경로가 이 앱의 주된 전달 방식이라, 미리보기가
+      비어 있으면 "이게 뭔지" 모르는 채로 열게 된다.
+      설명은 웰니스 표현만 쓴다. 예방·치료·진단 같은 의료 효과를 주장하지 않는다(SPEC 4장).
+      %SITE_URL% 은 빌드할 때 채워진다(vite.config.js). Vercel 에서는 배포 도메인이
+      자동으로 들어가고, 로컬에서는 빈 문자열이 되어 상대 경로로 남는다.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="오늘의 두뇌 건강" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta property="og:title" content="오늘의 두뇌 건강" />
+    <meta
+      property="og:description"
+      content="장보기·요리 같은 일상 과제로 두뇌 건강 습관을 이어가는 웰니스 앱입니다. 가족과 함께 한 주 활동을 볼 수 있어요."
+    />
+    <meta property="og:url" content="%SITE_URL%/" />
+    <meta property="og:image" content="%SITE_URL%/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="오늘의 두뇌 건강 — 장보기·요리로 이어가는 두뇌 건강 습관" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="오늘의 두뇌 건강" />
+    <meta
+      name="twitter:description"
+      content="장보기·요리 같은 일상 과제로 두뇌 건강 습관을 이어가는 웰니스 앱입니다."
+    />
+    <meta name="twitter:image" content="%SITE_URL%/og-image.png" />
+
     <title>오늘의 두뇌 건강</title>
   </head>
   <body>

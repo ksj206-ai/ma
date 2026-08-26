@@ -3,6 +3,33 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 /*
+ * 링크 미리보기(og:image, og:url)는 절대 주소여야 스크래퍼가 이미지를 가져간다.
+ * 그런데 배포 도메인을 소스에 박아 두면 도메인이 바뀌는 순간 조용히 깨진다.
+ * index.html 에는 %SITE_URL% 자리만 두고 빌드할 때 채운다.
+ *
+ *   1) VITE_SITE_URL            직접 지정할 때
+ *   2) VERCEL_PROJECT_PRODUCTION_URL / VERCEL_URL   Vercel 이 빌드에 자동으로 넣어 준다
+ *   3) 둘 다 없으면 빈 문자열 -> '/og-image.png' 상대 경로로 남는다.
+ *      대부분의 미리보기가 페이지 주소 기준으로 풀어 주므로 개발 중에도 깨지지 않는다.
+ */
+function resolveSiteUrl() {
+  const direct = process.env.VITE_SITE_URL
+  if (direct) return direct.replace(/\/$/, '')
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL
+  return vercel ? `https://${vercel}` : ''
+}
+
+function siteUrlPlugin() {
+  const siteUrl = resolveSiteUrl()
+  return {
+    name: 'site-url-in-html',
+    transformIndexHtml(html) {
+      return html.split('%SITE_URL%').join(siteUrl)
+    },
+  }
+}
+
+/*
  * PWA (SPEC 2장) — 마일스톤 7.
  *
  * [개발 중 캐시 문제 방지]
@@ -24,6 +51,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   plugins: [
     react(),
+    siteUrlPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: { enabled: false },

@@ -89,3 +89,27 @@ export function formatShortDate(dateKey) {
   const [, m, d] = dateKey.split('-').map(Number)
   return `${m}/${d}`
 }
+
+
+/**
+ * 최근 n일이 각각 훈련한 날인지 (마일스톤 8 — 홈의 도장 표시).
+ * 새 계산이 아니라 calcStreak 와 같은 재료(세션 날짜 집합)를 날짜별로 늘어놓기만 한다.
+ *
+ *   반환: [{ dateKey, weekday, trained, isToday }]  (오래된 날부터)
+ */
+export function recentDayStamps(sessions, days = 7) {
+  const trainedDays = new Set((sessions || []).map((s) => s.date))
+  const today = todayKey()
+  const weekdayNames = ['일', '월', '화', '수', '목', '금', '토']
+
+  return Array.from({ length: days }, (_, index) => {
+    const dateKey = dateKeyDaysAgo(days - 1 - index)
+    const [y, m, d] = dateKey.split('-').map(Number)
+    return {
+      dateKey,
+      weekday: weekdayNames[new Date(y, m - 1, d, 12).getDay()],
+      trained: trainedDays.has(dateKey),
+      isToday: dateKey === today,
+    }
+  })
+}

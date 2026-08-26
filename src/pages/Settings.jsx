@@ -42,7 +42,7 @@ export default function Settings() {
 
       <div className="space-y-5">
         <Card title="화면과 소리">
-          <div className="space-y-8">
+          <div className="space-y-6">
             <ToggleRow
               id="setting-large-text"
               label="글자 크게"
@@ -51,7 +51,7 @@ export default function Settings() {
               onChange={(next) => setPreference('largeText', next)}
             />
 
-            <div className="border-t-2 border-line pt-8">
+            <div className="border-t-2 border-line pt-6">
               <ToggleRow
                 id="setting-voice"
                 label="음성 안내"
@@ -85,7 +85,10 @@ export default function Settings() {
           description="이름과 그동안의 활동 기록을 모두 지우고 처음부터 다시 시작합니다."
         >
           {confirmingReset ? (
-            <div className="rounded-card border-4 border-danger bg-surface p-5">
+            // border-4: "누를 수 있는 것만 4px" 규칙의 유일한 예외다.
+            // 되돌릴 수 없는 행동 앞에서 한 번 멈춰 세우는 것이 이 패널의 목적이고,
+            // 빨강이라 파란 계열 버튼과 헷갈리지도 않는다 (tailwind.config.js 참고).
+            <div className="rounded-card border-4 border-danger bg-surface px-4 py-4">
               <p className="text-button font-bold text-ink">
                 정말 모두 지울까요?
               </p>

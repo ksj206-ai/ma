@@ -16,7 +16,7 @@ export default function CountdownPanel({ secondsLeft, children, skipLabel, onSki
         <div className="flex items-baseline justify-between gap-4">
           <span className="text-button font-bold text-ink">남은 시간</span>
           {/* 숫자는 크게. 초읽기를 스크린리더가 매초 읽으면 방해되므로 소리로는 알리지 않는다. */}
-          <span className="text-[2.5em] font-bold leading-none text-primary-700">
+          <span className="text-hero font-bold text-primary-700">
             {secondsLeft}초
           </span>
         </div>

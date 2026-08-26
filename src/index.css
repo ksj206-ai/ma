@@ -48,7 +48,13 @@
     border-radius: 0.5rem;
   }
 
-  /* 애니메이션은 절제하고 느리게 (SPEC 3장) */
+  /*
+   * 애니메이션은 절제하고 느리게 (SPEC 3장 · 12장)
+   *
+   * 이 블록이 이 앱 애니메이션의 최종 안전장치다. 운영체제에서 "동작 줄이기"를 켠 분에게는
+   * 아래 @layer components 의 효과가 전부 즉시 끝난 상태로만 보인다. 새 효과를 추가할 때
+   * 여기 걸리는지(= CSS animation/transition 인지) 반드시 확인할 것.
+   */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -56,5 +62,62 @@
       animation-duration: 0.01ms !important;
       transition-duration: 0.01ms !important;
     }
+  }
+}
+
+@layer components {
+  /*
+   * [절제된 시각 효과 — 마일스톤 8]
+   *
+   * 판단 기준은 하나다: "이 움직임이 과제 이해를 돕는가."
+   *  - 담은 것이 장바구니로 날아가면 → 방금 누른 것이 어디로 갔는지 알게 된다. 도움이 된다.
+   *  - 고른 단계가 아래에서 올라오면 → 내 선택이 목록의 어디에 놓였는지 알게 된다. 도움이 된다.
+   *  - 폭죽·색종이·콤보는 아무것도 알려 주지 않는다. 그래서 없다(SPEC 12장).
+   *
+   * 공통 규칙
+   *  - 전부 0.5초 이내, ease-out 계열. 튕김(bounce)·흔들림(shake) 없음.
+   *  - 움직임이 정보 전달의 유일한 수단이 되지 않는다. 애니메이션이 끝난 뒤의 정지 화면만
+   *    봐도 상태를 알 수 있다(담긴 개수 · 순서 번호 · 체크 글자).
+   *  - prefers-reduced-motion 은 위 base 블록이 일괄로 처리한다.
+   */
+
+  /* 고른 항목이 목록에 놓일 때 — 아래에서 살짝 올라오며 나타난다 (요리 순서, 장바구니 목록) */
+  .anim-settle {
+    animation: settle-in 280ms ease-out both;
+  }
+
+  /* 완료 체크가 나타날 때 — 아주 살짝 커지며 자리잡는다 (미션 완료, 훈련 완료) */
+  .anim-check {
+    animation: check-in 240ms ease-out both;
+  }
+
+  /* 담은 것이 장바구니로 이동 — Shopping.jsx 가 좌표를 계산해 style 로 넘긴다 */
+  .anim-fly {
+    position: fixed;
+    z-index: 40;
+    pointer-events: none;
+    transition: transform 420ms ease-in-out, opacity 420ms ease-in-out;
+  }
+}
+
+@keyframes settle-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes check-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }

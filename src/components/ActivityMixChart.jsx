@@ -67,7 +67,7 @@ export default function ActivityMixChart({ activity }) {
     >
       {rows.length > 0 ? (
         <>
-          <p className="text-[1.2em] font-bold leading-snug text-ink">{activity.sentence}</p>
+          <p className="text-lead font-bold text-ink">{activity.sentence}</p>
 
           <div className="mt-5">
             {rows.length <= 3 ? (

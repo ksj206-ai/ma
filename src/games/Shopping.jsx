@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageTitle from '../components/PageTitle.jsx'
 import Card from '../components/Card.jsx'
@@ -57,6 +57,11 @@ export default function Shopping() {
   const [cart, setCart] = useState([])
   const [changeChoices, setChangeChoices] = useState([])
 
+  // "장바구니로 이동" 효과 (마일스톤 8). 화면에 잠깐 떠 있다 사라지는 조각들.
+  const [flights, setFlights] = useState([])
+  const cartCountRef = useRef(null)
+  const flightSeq = useRef(0)
+
   // 소요 시간 측정용. 렌더와 무관하므로 ref 에 둔다.
   const shopStartedAt = useRef(0)
   const checkoutStartedAt = useRef(0)
@@ -81,13 +86,52 @@ export default function Shopping() {
   const currentStep = phase === PHASES.CHECKOUT ? 3 : phase === PHASES.SHOP ? 2 : 1
   const listLength = Math.min(config.listLength, recipe.ingredients.length)
 
-  function toggleItem(name) {
+  function toggleItem(name, event) {
     // 담기와 빼기가 같은 동작이다. 어느 쪽도 벌점이나 경고가 없다.
+    const wasPicked = cart.includes(name)
     setCart((current) =>
-      current.includes(name)
-        ? current.filter((item) => item !== name)
-        : [...current, name]
+      wasPicked ? current.filter((item) => item !== name) : [...current, name]
     )
+    // 담을 때만 날린다. 뺄 때는 아무 연출도 하지 않는다 —
+    // 취소는 실수를 되돌리는 행동이라 조용해야 한다(SPEC 3장 오류 관용).
+    if (!wasPicked) launchFlight(name, event)
+  }
+
+  /**
+   * 방금 누른 칸에서 장바구니 숫자로 조각 하나를 날린다.
+   *
+   * 담는 순간 화면에서 바뀌는 것은 저 위의 숫자 하나뿐이라, 누르고도 무엇이 어디로 갔는지
+   * 알기 어렵다. 눌린 자리에서 숫자까지 선을 그어 주면 "내가 담은 것이 저기 들어갔다"가
+   * 눈으로 이어진다. 과제 이해를 돕는 움직임이라 넣었다(SPEC 3장 · 12장).
+   *
+   * 이 효과는 순수한 덤이다. 없어도(동작 줄이기 설정·좌표 계산 실패) 담기는 그대로 되고,
+   * 담긴 개수는 숫자로 항상 보인다.
+   */
+  function launchFlight(name, event) {
+    if (prefersReducedMotion()) return
+    const source = event?.currentTarget
+    const target = cartCountRef.current
+    if (!source || !target) return
+
+    const from = source.getBoundingClientRect()
+    const to = target.getBoundingClientRect()
+    const id = (flightSeq.current += 1)
+
+    setFlights((current) => [
+      ...current,
+      {
+        id,
+        name,
+        from,
+        dx: to.left + to.width / 2 - (from.left + from.width / 2),
+        dy: to.top + to.height / 2 - (from.top + from.height / 2),
+      },
+    ])
+    // 애니메이션 길이(420ms)보다 살짝 뒤에 치운다. 남아 있어도 pointer-events 가 없어
+    // 화면을 가로막지는 않는다.
+    window.setTimeout(() => {
+      setFlights((current) => current.filter((flight) => flight.id !== id))
+    }, 500)
   }
 
   function goShopping() {
@@ -238,11 +282,11 @@ export default function Shopping() {
           onSkip={goShopping}
           skipLabel="다 외웠으니 진열대로 넘어가기"
         >
-          <ul className="space-y-3">
+          <ul className="space-y-4">
             {targets.map((item) => (
               <li
                 key={item.name}
-                className="rounded-card border-2 border-primary-200 bg-primary-50 px-5 py-4 text-button font-bold text-primary-800"
+                className="anim-settle rounded-card border-2 border-primary-200 bg-primary-50 px-4 py-4 text-button font-bold text-primary-800"
               >
                 {item.name}
               </li>
@@ -263,23 +307,34 @@ export default function Shopping() {
         <Card>
           <p className="text-body text-muted">
             장바구니에 담긴 것{' '}
-            <span className="font-bold text-primary-700">{cart.length}개</span>
+            {/* 이동 효과의 도착점. 효과가 없어도 이 숫자만 보면 담긴 개수를 알 수 있다. */}
+            <span ref={cartCountRef} className="font-bold text-primary-700">
+              {cart.length}개
+            </span>
           </p>
           <p className="mt-1 text-body text-muted">
             잘못 담았으면 한 번 더 누르면 빠집니다. 괜찮습니다.
           </p>
 
-          <ul className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {shelf.map((item) => (
-              <li key={item.name}>
-                <ShelfItem
-                  name={item.name}
-                  picked={cart.includes(item.name)}
-                  onToggle={() => toggleItem(item.name)}
-                />
-              </li>
-            ))}
-          </ul>
+          {/*
+            진열대 (마일스톤 8)
+            바깥 틀은 선반장, 각 칸 아래의 굵은 선은 상품이 놓인 선반 판이다.
+            상품이 허공에 떠 있는 격자가 아니라 "선반 칸에 놓여 있다"로 읽히게 하는 것이
+            목적이고, 그 이상은 하지 않는다. 칸 구분은 ShelfItem 자체의 4px 테두리가 맡는다.
+          */}
+          <div className="mt-5 rounded-card border-2 border-line bg-bg p-3">
+            <ul className="grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-3">
+              {shelf.map((item) => (
+                <li key={item.name} className="border-b-4 border-line pb-3">
+                  <ShelfItem
+                    name={item.name}
+                    picked={cart.includes(item.name)}
+                    onToggle={(event) => toggleItem(item.name, event)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
         </Card>
 
         <div className="mt-6">
@@ -287,6 +342,8 @@ export default function Shopping() {
             다 담았어요
           </BigButton>
         </div>
+
+        <FlightLayer flights={flights} />
       </>
     )
   }
@@ -298,7 +355,7 @@ export default function Shopping() {
       <PageTitle description="계산대에서 거스름돈을 확인해 주세요.">계산대</PageTitle>
 
       <Card title="영수증">
-        <ul className="space-y-3">
+        <ul className="space-y-4">
           {targets.map((item) => (
             <li
               key={item.name}
@@ -319,7 +376,7 @@ export default function Shopping() {
       <div className="mt-6 space-y-5">
         {changeQuestions.map((question, questionIndex) => (
           <Card key={question.bill}>
-            <p className="text-[1.4em] font-bold leading-snug text-ink">
+            <p className="text-lead font-bold text-ink">
               {formatWon(question.bill)}을 내면 거스름돈은 얼마일까요?
             </p>
 
@@ -348,5 +405,62 @@ export default function Shopping() {
         </BigButton>
       </div>
     </>
+  )
+}
+
+
+/** 운영체제의 "동작 줄이기" 설정. 켜져 있으면 이동 효과를 아예 만들지 않는다. */
+function prefersReducedMotion() {
+  try {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  } catch {
+    return false
+  }
+}
+
+/**
+ * 담은 것이 장바구니 숫자로 날아가는 조각들 (마일스톤 8).
+ *
+ * 지키는 것
+ *  - 420ms, ease-in-out. 튕기거나 흔들리지 않고 한 번에 건너간다.
+ *  - aria-hidden + pointer-events-none. 보조기술과 조작에는 존재하지 않는다.
+ *  - 이 조각이 사라진 뒤에도 담긴 개수는 숫자로 남는다 — 움직임이 정보의 유일한 수단이 아니다.
+ */
+function FlightLayer({ flights }) {
+  if (flights.length === 0) return null
+  return (
+    <div aria-hidden="true">
+      {flights.map((flight) => (
+        <FlightChip key={flight.id} flight={flight} />
+      ))}
+    </div>
+  )
+}
+
+function FlightChip({ flight }) {
+  // 첫 프레임은 출발 위치 그대로 그리고, 다음 프레임에 도착 위치로 바꾼다.
+  // 두 프레임으로 나누지 않으면 브라우저가 변화를 못 보고 곧장 도착 상태로 그린다.
+  const [moved, setMoved] = useState(false)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMoved(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
+
+  return (
+    <span
+      className="anim-fly rounded-pill border-4 border-primary-700 bg-primary-100 px-4 py-2 text-body font-bold text-primary-800"
+      style={{
+        left: flight.from.left,
+        top: flight.from.top,
+        width: flight.from.width,
+        textAlign: 'center',
+        transform: moved
+          ? `translate(${flight.dx}px, ${flight.dy}px) scale(0.4)`
+          : 'translate(0, 0) scale(1)',
+        opacity: moved ? 0 : 1,
+      }}
+    >
+      {flight.name}
+    </span>
   )
 }

@@ -48,7 +48,7 @@ export default function CumulativeTrainingChart({ cumulative }) {
 
   return (
     <Card title="지금까지 함께한 훈련" description="한 번 하실 때마다 하나씩 쌓입니다.">
-      <p className="text-[1.6em] font-bold leading-none text-primary-700">
+      <p className="text-title font-bold text-primary-700">
         {cumulative.total}회
       </p>
       <p className="mt-3 text-body text-ink">{cumulative.sentence}</p>

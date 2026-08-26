@@ -219,11 +219,11 @@ export default function Cooking() {
           onSkip={goOrdering}
           skipLabel="다 외웠으니 순서 맞추기로 넘어가기"
         >
-          <ol className="space-y-3">
+          <ol className="space-y-4">
             {correctSteps.map((step, index) => (
               <li
                 key={step}
-                className="flex items-start gap-3 rounded-card border-2 border-primary-200 bg-primary-50 px-3 py-4"
+                className="flex items-start gap-3 rounded-card border-2 border-primary-200 bg-primary-50 px-4 py-4"
               >
                 <span
                   aria-hidden="true"
@@ -257,7 +257,7 @@ export default function Cooking() {
           <Card title="내가 만든 순서">
             {picked.length > 0 ? (
               <>
-                <ol className="space-y-3">
+                <ol className="space-y-4">
                   {picked.map((step, index) => (
                     <li key={step}>
                       <button
@@ -267,7 +267,10 @@ export default function Cooking() {
                         className={[
                           // "빼기"를 같은 줄에 두면 좁은 화면에서 단계 문구가 쓸 폭이 없어
                           // 글자가 한 줄에 하나씩 세로로 쌓인다. 그래서 아래위 두 줄로 나눈다.
-                          'flex w-full min-h-touch flex-col gap-2',
+                          // anim-settle: 방금 고른 단계가 아래에서 살짝 올라오며 놓인다.
+                          // 내 선택이 목록의 몇 번째에 놓였는지 눈으로 따라가게 하는 것이
+                          // 목적이다(마일스톤 8). 280ms, 튕김 없음.
+                          'anim-settle flex w-full min-h-touch flex-col gap-2',
                           'rounded-card border-4 border-primary-700 bg-primary-100 px-3 py-4',
                           // text-button: 이 칸도 누를 수 있는 선택지다. 글자 크기를 지정하지
                           // 않으면 본문(20px)을 물려받아 "버튼 24px 이상"(SPEC 3장)에 미달한다.
@@ -363,7 +366,7 @@ export default function Cooking() {
       <div className="space-y-5">
         {measureQuestions.map((question, questionIndex) => (
           <Card key={question.key}>
-            <p className="break-keep text-[1.3em] font-bold leading-snug text-ink">
+            <p className="break-keep text-lead font-bold text-ink">
               {question.text}
             </p>
 

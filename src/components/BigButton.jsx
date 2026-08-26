@@ -28,7 +28,7 @@ export default function BigButton({
       onClick={onClick}
       className={[
         'inline-flex w-full items-center justify-center gap-3',
-        'min-h-touch rounded-card border-2 px-6 py-4',
+        'min-h-touch rounded-card border-4 px-6 py-4',
         'text-button font-bold',
         'transition-colors duration-150',
         'disabled:opacity-60',

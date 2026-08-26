@@ -95,7 +95,7 @@ function WeekSummaryCard({ summary }) {
             className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-4 first:pt-0 last:pb-0"
           >
             <span className="text-body font-bold text-ink">{stat.label}</span>
-            <span className="text-[1.6em] font-bold leading-none text-primary-700">
+            <span className="text-title font-bold text-primary-700">
               {stat.value}
             </span>
           </li>
@@ -118,7 +118,7 @@ function MissionCard({ missions }) {
     <Card title="실제로 해보기">
       {doneList.length > 0 ? (
         <>
-          <p className="text-[1.3em] font-bold leading-snug text-ink">
+          <p className="text-lead font-bold text-ink">
             이번 주에 {doneList.length}가지를 직접 해내셨어요.
           </p>
           <ul className="mt-5 space-y-4">
@@ -126,7 +126,7 @@ function MissionCard({ missions }) {
               <li key={mission.id} className="flex items-start gap-4">
                 <span
                   aria-hidden="true"
-                  className="mt-0.5 flex min-h-[2rem] min-w-[2rem] shrink-0 items-center justify-center rounded-pill bg-success text-[1.1em] font-bold leading-none text-white"
+                  className="anim-check mt-0.5 flex min-h-[2rem] min-w-[2rem] shrink-0 items-center justify-center rounded-pill bg-success text-[1.1em] font-bold leading-none text-white"
                 >
                   ✓
                 </span>
@@ -170,10 +170,10 @@ function HighlightCard({ highlights }) {
         {highlights.map((item) => (
           <li
             key={item.id}
-            className="rounded-card border-2 border-primary-200 bg-primary-50 px-5 py-4"
+            className="rounded-card border-2 border-primary-200 bg-primary-50 px-4 py-4"
           >
             <p className="text-body font-bold text-primary-700">{item.title}</p>
-            <p className="mt-2 text-[1.2em] font-bold leading-snug text-ink">{item.body}</p>
+            <p className="mt-2 text-lead font-bold text-ink">{item.body}</p>
           </li>
         ))}
       </ul>

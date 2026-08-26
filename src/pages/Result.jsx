@@ -59,11 +59,11 @@ export default function Result() {
           title="오늘 실제로 해보기"
           description="훈련에서 그친 것이 아니라, 오늘 진짜로 해보시면 더 좋습니다."
         >
-          <p className="text-[1.4em] font-bold leading-snug text-ink">{bridgeText}</p>
+          <p className="text-lead font-bold text-ink">{bridgeText}</p>
 
           {savedMission ? (
             <p className="mt-5 flex items-center gap-2 text-body font-bold text-success">
-              <span aria-hidden="true">✓</span>
+              <span aria-hidden="true" className="anim-check">✓</span>
               <span>홈 화면의 오늘 미션에 담아 두었습니다.</span>
             </p>
           ) : (
@@ -109,8 +109,12 @@ function ResultBlock({ block }) {
                 key={item}
                 className={[
                   'flex items-center gap-2 rounded-pill border-2 px-5 py-3 text-button font-bold',
+                  // 'good' 은 초록 테두리 + 초록 글자 + 체크로 구분한다.
+                  // 원래는 bg-primary-50(파란 틴트)을 깔았는데, 초록 글자 아래에 파란 면이
+                  // 깔린 유일한 조합이라 다른 화면과 색 계열이 어긋났다. 초록 틴트로 바꾸면
+                  // 대비가 7.13:1 에서 6.76:1 로 떨어져 AAA 를 못 지키므로 면은 비워 둔다.
                   block.tone === 'good'
-                    ? 'border-success bg-primary-50 text-success'
+                    ? 'border-success bg-surface text-success'
                     : 'border-line bg-surface text-ink',
                 ].join(' ')}
               >
@@ -130,7 +134,7 @@ function ResultBlock({ block }) {
   if (block.kind === 'ordered') {
     return (
       <Card title={block.title}>
-        <ol className="space-y-3">
+        <ol className="space-y-4">
           {block.items.map((item, index) => (
             <li
               key={item}

@@ -25,7 +25,7 @@ export default function Training() {
           <li key={game.id}>
             <Card>
               <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2">
-                <h2 className="text-[1.4em] font-bold leading-snug text-ink">
+                <h2 className="text-lead font-bold text-ink">
                   {game.name}
                 </h2>
                 {!game.available ? (
